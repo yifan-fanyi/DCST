@@ -1,7 +1,7 @@
 # PCS Paper
 ### Yifan Wang & Zhanxuan Mei
 ### 2021.01
-#### yifanwang@0916@outlook.com
+#### yifanwang0916@outlook.com
 ***
 #### Based on JPEG framework, modified: 
 (1) The color space conversion from YCbCr (420) to PQR (420) (PCA based single image color conversion);    
