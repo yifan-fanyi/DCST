@@ -86,7 +86,7 @@ def compute_quantization_matrix(K1, K2, q, win=4):
     Q = np.round(q/H_f)
     return H_f, Q
 
-def JPEG_Quant(Qstep=50):
+def Quant_Matrix(N, mode):
     JPEG_Q = np.array([16, 11, 10, 16, 24, 40, 51, 61,
                       12, 12, 14, 19, 26, 58, 60, 55,
                       14, 13, 16, 24, 40, 57, 69, 56,
@@ -95,28 +95,20 @@ def JPEG_Quant(Qstep=50):
                       24, 35, 55, 64, 81, 104, 113, 92,
                       49, 64, 78, 87, 103, 121, 120, 101,
                       72, 92, 95, 98, 112, 100, 103, 99], dtype='float64')
-    newQ = np.round(Qstep/16*JPEG_Q )
+    HVS_Q = np.array([16, 16, 16, 16, 17, 18, 21, 24,
+                        16, 16, 16, 16, 17, 19, 22, 25,
+                        16, 16, 17, 18, 20, 22, 25, 29,
+                        16, 16, 18, 21, 24, 27, 31, 36,
+                        17, 17, 20, 24, 30, 35, 41, 47,
+                        18, 19, 22, 27, 35, 44, 54, 65,
+                        21, 22, 25, 31, 41, 54, 70, 88,
+                        24, 25, 29, 36, 47, 65, 88, 115], dtype='float64')
+    if mode == 'JPEG':
+        new_Q = JPEG_Q
+    elif mode == 'HVS':
+        new_Q = HVS_Q
+    if N >= 50:   
+        newQ = (100. - N) / 50. * new_Q.copy()
+    else:
+        newQ = 50. / N * new_Q.copy()
     return newQ
-
-def Q(tPCA, X, Qstep, mode=0):
-    if mode == 0:
-        _, Qmatrix = compute_quantization_matrix(tPCA.K1, tPCA.K2, Qstep, win=8)
-        Qmatrix = Qmatrix.reshape(-1)
-        return np.round(X/Qmatrix)
-    elif mode == 2:
-        Qmatrix = JPEG_Quant(Qstep)
-        return np.round(X/Qmatrix)
-    else:
-        return np.round(X/Qstep)
-    
-def dQ(tPCA, X, Qstep, mode=0):
-    if mode == 0:
-        _, Qmatrix = compute_quantization_matrix(tPCA.K1, tPCA.K2, Qstep, win=8)
-        Qmatrix = Qmatrix.reshape(-1)
-        return X * Qmatrix
-    elif mode == 2:
-        Qmatrix = JPEG_Quant(Qstep)
-        return X * Qmatrix
-    else:
-        return X * Qstep
-    

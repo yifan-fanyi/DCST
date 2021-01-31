@@ -6,9 +6,22 @@ import numpy as np
 import copy
 from sklearn.preprocessing import normalize
 
-from transform import myPCA
-from utli import Clip
+from framework.core.myPCA import myPCA
+from framework.core.llsr import LLSR
 
+def Clip(X):
+    tmp = copy.deepcopy(X)
+    tmp = tmp.astype('int16')
+    tmp[tmp > 255] = 255
+    tmp[tmp < 0] = 0
+    return tmp
+
+def YUV4202BGR(X):
+    tmp = [ X[0], 
+            cv2.resize(X[1], (X[0].shape[1], X[0].shape[2])),
+            cv2.resize(X[2], (X[0].shape[1], X[0].shape[2]))]
+    return YUV2BGR(tmp)
+    
 def BGR2PQR(X):
     def reScale(K):
         K[:1] = normalize(K[:1], norm='l1')
@@ -56,7 +69,7 @@ def YUV2BGR(X):
     S = X.shape
     X = np.dot(K, X.reshape(3, -1))
     X = np.moveaxis(X.reshape(S), 0, -1)
-    return BGR2RGB(X)
+    return Clip(BGR2RGB(X))
 
 def ML_inv_color(X_bgr, iX):
     llsr = LLSR(onehot=False)
@@ -64,33 +77,3 @@ def ML_inv_color(X_bgr, iX):
     iX = llsr.predict_proba(iX.reshape(-1,3)).reshape(X_bgr.shape)
     iX = Clip(iX.astype('int32'))
     return iX
-
-class LLSR():
-    def __init__(self, onehot=True, normalize=False):
-        self.onehot = onehot
-        self.normalize = normalize
-        self.weight = []
-
-    def fit(self, X, Y):
-        if self.onehot == True:
-            Y = np.eye(len(np.unique(Y)))[Y.reshape(-1)]
-        A = np.ones((X.shape[0], 1))
-        X = np.concatenate((X, A), axis=1)
-        self.weight, _, _, _ = np.linalg.lstsq(X, Y, rcond=None)
-        return self
-
-    def predict(self, X):
-        pred = self.predict_proba(X)
-        return np.argmax(pred, axis=1)
-
-    def predict_proba(self, X):
-        A = np.ones((X.shape[0], 1))
-        X = np.concatenate((X, A), axis=1)
-        pred = np.matmul(X, self.weight)
-        if self.normalize == True:
-            pred = (pred - np.min(pred, axis=1, keepdims=True))/ np.sum((pred - np.min(pred, axis=1, keepdims=True) + 1e-15), axis=1, keepdims=True)
-        return pred
-
-    def score(self, X, Y):
-        pred = self.predict(X)
-        return accuracy_score(Y, pred)

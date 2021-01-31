@@ -7,6 +7,18 @@
 import numpy as np
 from sklearn.decomposition import PCA
 from skimage.util import view_as_windows
+from scipy.fftpack import dct, idct
+
+def Shrink(X, win):
+    X = view_as_windows(X, (1,win,win,1), (1,win,win,1))
+    return X.reshape(X.shape[0], X.shape[1], X.shape[2], -1)
+
+def invShrink(X, win):
+    S = X.shape
+    X = X.reshape(S[0], S[1], S[2], -1, 1, win, win, 1)
+    X = np.moveaxis(X, 5, 2)
+    X = np.moveaxis(X, 6, 4)
+    return X.reshape(S[0], win*S[1], win*S[2], -1)
 
 class myPCA():
     def __init__(self, n_components=-1, is2D=False, H=None, W=None):
@@ -148,13 +160,28 @@ class myPCA():
         else:
             return self.PCA_2D_transform(X, inv=True)
 
-def Shrink(X, win):
-    X = view_as_windows(X, (1,win,win,1), (1,win,win,1))
-    return X.reshape(X.shape[0], X.shape[1], X.shape[2], -1)
+class DCT():
+    def __init__(self, N=8, P=8):
+        self.N = N
+        self.P = P
+        self.W = 8
+        self.H = 8
+    
+    def transform(self, a):
+        S = list(a.shape)
+        a = a.reshape(-1, self.N, self.P, 1)
+        a = dct(dct(a, axis=1, norm='ortho'), axis=2, norm='ortho')
+        return a.reshape(S)
 
-def invShrink(X, win):
-    S = X.shape
-    X = X.reshape(S[0], S[1], S[2], -1, 1, win, win, 1)
-    X = np.moveaxis(X, 5, 2)
-    X = np.moveaxis(X, 6, 4)
-    return X.reshape(S[0], win*S[1], win*S[2], -1)
+    def inverse_transform(self, a):
+        S = list(a.shape)
+        a = a.reshape(-1, self.N, self.P, 1)
+        a = idct(idct(a, axis=1, norm='ortho'), axis=2, norm='ortho')
+        return a.reshape(S)
+    
+    def ML_inverse_transform(self, Xraw, X):
+        llsr = LLSR(onehot=False)
+        llsr.fit(X.reshape(-1, X.shape[-1]), Xraw.reshape(-1, X.shape[-1]))
+        S = X.shape
+        X = llsr.predict_proba(X.reshape(-1, X.shape[-1])).reshape(S)
+        return X

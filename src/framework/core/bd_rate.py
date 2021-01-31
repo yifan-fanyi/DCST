@@ -1,19 +1,11 @@
-# 2020.01.28
+# 2020.04.02
 # @yifan
-# evaluation metric
-#
+# BD rate, ref: # https://github.com/Anserw/Bjontegaard_metric
+
 import numpy as np
-from skimage.metrics import mean_squared_error, peak_signal_noise_ratio
 from scipy import signal
 from scipy.ndimage.filters import convolve
 import scipy.interpolate
-
-# evaluation    
-def MSE(ref, X):
-    return mean_squared_error(ref, X)
-
-def PSNR(X, XX):
-    return 20*np.log10(255/np.sqrt(mean_squared_error(XX, X)))
 
 def BD_PSNR(R1, PSNR1, R2, PSNR2, piecewise=0):
     lR1 = np.log(R1)
@@ -46,6 +38,7 @@ def BD_PSNR(R1, PSNR1, R2, PSNR2, piecewise=0):
     avg_diff = (int2-int1)/(max_int-min_int)
 
     return avg_diff
+
 
 def BD_RATE(R1, PSNR1, R2, PSNR2, piecewise=0):
     lR1 = np.log(R1)
@@ -81,7 +74,6 @@ def BD_RATE(R1, PSNR1, R2, PSNR2, piecewise=0):
     avg_diff = (np.exp(avg_exp_diff)-1)*100
     return avg_diff
 
-def BD_Performance(R1_ref, PSNR1_ref, R2, PSNR2):
-    print('BD-PSNR: ', BD_PSNR(R1_ref, PSNR1_ref, R2, PSNR2))
-    print('BD-RATE: ', BD_RATE(R1_ref, PSNR1_ref, R2, PSNR2))
-
+def BD(ref_R1, ref_PSNR1, R2, PSNR2):
+    print('BD-PSNR: ', BD_PSNR(ref_R1, ref_PSNR1, R2, PSNR2))
+    print('BD-RATE: ', BD_RATE(ref_R1, ref_PSNR1, R2, PSNR2))
