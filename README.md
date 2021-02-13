@@ -1,4 +1,4 @@
-# PCS Paper
+# DCST: A Data-driven Color/Spatial Transform-based Image Coding Method
 ### Yifan Wang & Zhanxuan Mei
 ### 2021.01
 #### yifanwang0916@outlook.com
